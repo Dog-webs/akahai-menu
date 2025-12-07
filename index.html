@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Akahai Sunset Wave Menu</title>
+
+  <style>
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      font-family: "Noto Sans JP", sans-serif;
+      color: white;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+    }
+
+    .content {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      padding: 40px 16px 10px;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.7);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 38px;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 10px 0 0;
+    }
+
+    /* ---------- ガラスカードレイアウト ---------- */
+    .menu-wrapper {
+      position: relative;
+      z-index: 4;
+      max-width: 1100px;
+      margin: 30px auto 60px;
+      padding: 0 20px;
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 32px;
+    }
+
+    .menu-card {
+      background: rgba(255, 255, 255, 0.22); /* 半透明の白 */
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(14px); /* ガラス効果 */
+      box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.35);
+      transition: 0.25s;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 34px rgba(0,0,0,0.4);
+      background: rgba(255,255,255,0.32);
+    }
+
+    .menu-card img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- 背景アニメーション（太陽＋波） -->
+<canvas id="waveCanvas"></canvas>
+
+<!-- タイトル -->
+<div class="content">
+  <h1>AKAHI FOOD & DRINK MENU</h1>
+  <p>AKAHAI ORIGINAL Hawaiian　MENU</p>
+</div>
+
+<!-- メニュー一覧（2列） -->
+<div class="menu-wrapper">
+
+  <div class="menu-card">
+    <img src="images/menu1.jpg" alt="メニュー1">
+  </div>
+
+  <div class="menu-card">
+    <img src="images/menu2.jpg" alt="メニュー2">
+  </div>
+
+  <div class="menu-card">
+    <img src="images/menu3.jpg" alt="メニュー3">
+  </div>
+
+  <div class="menu-card">
+    <img src="images/morning.jpg" alt="メニュー4">
+  </div>
+
+</div>
+
+<script>
+/* --------------------------------------------
+   AKAHI SUNSET WAVE + SINKING SUN  完全版
+--------------------------------------------- */
+
+const canvas = document.getElementById("waveCanvas");
+const ctx = canvas.getContext("2d");
+
+let t = 0;
+let sunY = 0;
+let startY = 0;
+let horizonY = 0;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  startY = canvas.height * 0.20;  // 太陽の初期位置
+  horizonY = canvas.height * 0.80; // 沈む位置
+  sunY = startY;
+}
+resize();
+window.addEventListener("resize", resize);
+
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* -------- サンセット空（薄い夕日色） -------- */
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  skyGrad.addColorStop(0,   "#FFD1A1"); 
+  skyGrad.addColorStop(0.4, "#FFB788");
+  skyGrad.addColorStop(0.8, "#E98A65");
+  skyGrad.addColorStop(1,   "#3B1F20");
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* -------- 太陽（強い存在感・大きめ） -------- */
+  const sunX = canvas.width * 0.5;
+  const sunRadius = canvas.height * 0.20;
+
+  if (sunY < horizonY + sunRadius + 40) {
+    sunY += 0.35;
+  } else {
+    sunY = startY;
+  }
+
+  const sunGrad = ctx.createRadialGradient(
+    sunX, sunY, 0,
+    sunX, sunY, sunRadius
+  );
+
+  sunGrad.addColorStop(0,   "rgba(255,255,235,1)");
+  sunGrad.addColorStop(0.3, "rgba(255,225,170,0.95)");
+  sunGrad.addColorStop(0.6, "rgba(255,180,120,0.50)");
+  sunGrad.addColorStop(1,   "rgba(255,150,90,0)");
+
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* -------- 波（3層・夕日反射） -------- */
+  function drawWaveLayer(color, h, len, speed, offset) {
+    ctx.beginPath();
+    ctx.fillStyle = color;
+
+    for (let x = 0; x <= canvas.width; x++) {
+      const y = Math.sin(x * len + t * speed) * h + canvas.height * offset;
+      ctx.lineTo(x, y);
+    }
+
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  drawWaveLayer("rgba(255,205,150,0.32)", 24, 0.010, 0.5, 0.78);
+  drawWaveLayer("rgba(255,165,120,0.40)", 34, 0.014, 0.9, 0.82);
+  drawWaveLayer("rgba(255,245,235,0.55)", 44, 0.018, 1.2, 0.86);
+
+  t += 0.015;
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>
